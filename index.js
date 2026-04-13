@@ -11,7 +11,7 @@ const initApp = async () => {
     await router(app);
     app.use(errorHandler);
 
-    app.listen( () => {
+    app.listen(PORT, "0.0.0.0",() => {
       console.log(`server is listening on port ${PORT}`);
     });
 
