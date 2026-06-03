@@ -7,12 +7,17 @@ import requestLogger from "./src/middleware/loggerMiddleware.js";
 
 const initApp = async () => {
   const app = express();
-  app.use(
-    cors({
-      origin: [process.env.FRONTEND_URL,"http://localhost:5173"],
-      credentials: true,
-    }),
-  );
+ app.use(
+  cors({
+    origin: [
+      "https://ecommerce-app-jade-five.vercel.app",
+      "http://localhost:5173",
+    ],
+    credentials: true,
+  })
+);
+
+app.options("*", cors());
 
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
