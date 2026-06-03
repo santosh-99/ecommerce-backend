@@ -1,0 +1,124 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Ecommerce API",
+    "description": "Interactive API documentation for the E-commerce backend. Includes User Auth and Product Management.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "http://localhost:4000", "description": "Local Development" },
+    { "url": "https://your-app.onrender.com", "description": "Production Server" }
+  ],
+  "tags": [
+    { "name": "Users", "description": "Authentication and User Profile" },
+    { "name": "Products", "description": "Catalog and Inventory Management" }
+  ],
+  "paths": {
+    "/api/v1/users/register": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Register a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserRegister" }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Created" }, "400": { "description": "Bad Request" } }
+      }
+    },
+    "/api/v1/users/login": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Login user to get session cookie",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserLogin" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "OK" }, "401": { "description": "Unauthorized" } }
+      }
+    },
+    "/api/v1/products": {
+      "get": {
+        "tags": ["Products"],
+        "summary": "Get all products",
+        "responses": { "200": { "description": "Success" } }
+      },
+      "post": {
+        "tags": ["Products"],
+        "summary": "Create product with image",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": { "$ref": "#/components/schemas/ProductCreate" }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Created" } }
+      }
+    },
+    "/api/v1/products/{productId}": {
+      "get": {
+        "tags": ["Products"],
+        "summary": "Get single product",
+        "parameters": [{ "name": "productId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Success" } }
+      },
+      "put": {
+        "tags": ["Products"],
+        "summary": "Update product price",
+        "parameters": [{ "name": "productId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "price": { "type": "number" } } } } }
+        },
+        "responses": { "200": { "description": "Updated" } }
+      },
+      "delete": {
+        "tags": ["Products"],
+        "summary": "Remove product",
+        "parameters": [{ "name": "productId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Deleted" } }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UserRegister": {
+        "type": "object",
+        "required": ["name", "email", "password"],
+        "properties": {
+          "name": { "type": "string" },
+          "email": { "type": "string" },
+          "password": { "type": "string" },
+          "type": { "type": "string", "enum": ["customer", "seller", "admin"], "default": "customer" }
+        }
+      },
+      "UserLogin": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string" },
+          "password": { "type": "string" }
+        }
+      },
+      "ProductCreate": {
+        "type": "object",
+        "required": ["name", "desc", "price", "category", "image"],
+        "properties": {
+          "name": { "type": "string" },
+          "desc": { "type": "string" },
+          "price": { "type": "number" },
+          "category": { "type": "string" },
+          "image": { "type": "string", "format": "binary" }
+        }
+      }
+    }
+  }
+}
