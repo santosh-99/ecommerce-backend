@@ -1,15 +1,12 @@
 import service from "../../service/index.js";
 
 export const register = async (req, res, next) => {
-  const body = req.body;
-  if (!body || Object.keys(body).length === 0) {
-    return res.status(400).send("Empty Body");
-  }
-
+ 
   try {
-    const user = await service.user.registration(body);
+    const user = await service.user.registration(req.body);
     res.status(201).json({
-      message: "User registered",
+      success: true,
+      message: "User registered successfully",
       data: user,
     });
   } catch (err) {
@@ -18,20 +15,19 @@ export const register = async (req, res, next) => {
 };
 export const login = async (req, res, next) => {
   const { email, password } = req.body;
-  console.log("req.body", req.body);
   try {
     const { token, user } = await service.user.login(email, password);
     res.cookie("token", token, {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
+      secure: true,
+      sameSite: "none",
       maxAge: 24 * 60 * 60 * 1000,
     });
 
     res.status(200).json({
-      message: "Successfull login",
-      userId: user._id,
-      name: user.name,
+      success: true,
+      message: "Login Successfull",
+      user 
     });
   } catch (err) {
     next(err);
@@ -42,6 +38,7 @@ export const logout = async(req, res, next) => {
   try {
     res.clearCookie('token', {
       httpOnly: true,
+      secure: true,
       sameSite:'none'
     });
     res.status(200).json({

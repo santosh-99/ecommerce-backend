@@ -14,7 +14,7 @@ const cartSchema = new mongoose.Schema({
         type: Number
 
     }
-}, { timeStamps: true,
+}, { timestamps: true,
     versionKey:false,
 });
 

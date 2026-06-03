@@ -1,11 +1,32 @@
 import mongoose from "mongoose";
-const userSchema = new mongoose.Schema({
-    name: {type: String, required: true,},
-    email:{type: String, required: true, unique: true},
-    password: {type: String, required: true}, 
-    type: {type: String, default: "user",  enum: ["user", "customer"]}
 
-    
+const userSchema = new mongoose.Schema({
+    name: {
+        type: String, 
+        required: [true, "Name is required"],
+        trim: true,
+        minlength: [3, "Name must be at least 3 characters long"]
+    },
+    email:{
+        type: String, 
+        required: [true, "Email is required"],
+        unique: true,
+        lowercase: true,
+        match:[/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/, "Please fill a valid email address"]
+    },
+    password: {
+        type: String, 
+        required:[true, "Password is required"]
+    }, 
+    type: {
+        type: String, 
+        default: "customer",  
+        enum:{
+            values: ["admin", "seller", "customer"],
+            message: "{VALUE} is not a supported user type"
+        }
+    }
+
 }, 
 {timestamps: true}
 )

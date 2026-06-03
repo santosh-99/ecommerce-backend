@@ -1,58 +1,63 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
-const productSchema = new mongoose.Schema({
+const productSchema = new mongoose.Schema(
+  {
     name: {
-        type: String,
-        required: true
+      type: String,
+      required: [true, 'Product name is required'],
+      trim: true,
     },
     desc: {
-        type: String,
-        required: true
-    },
-    imageUrl: {
-        type: String
+      type: String,
+      required: [true, 'Description is required'],
     },
     image: {
-        type:String
-        // data: Buffer,
-        // contentType: String
+      type: String,
+      required: [true, 'Product image is required'],
     },
+
     category: {
-        type: String
+      type: String,
+      enum: ['electronics', 'fashion', 'grocery', 'home', 'others'],
+      lowercase: true,
+      required: true,
+      default: 'electronics',
     },
     price: {
-        type: Number
+      type: Number,
+      required: [true, 'Price is required'],
+      min: [0, 'Price cannot be negative'],
     },
     size: {
-        type:[String] 
+      type: [String],
+      validate: {
+        validator: function (v) {
+          return v.every((s) => s && s.trim().length > 0);
+        },
+        message: 'Size cannot be an empty string!',
+      },
     },
-    ratings: {
-        type: [
-            {
-                userId: {
-                    type: mongoose.Schema.Types.ObjectId,
-                    ref: 'user',
-                    required: true
-                },
-                rating: {
-                    type: Number,
-                    min: 1,
-                    max:5,
-                    required: true
-                }
-            }
-            
-        ],
-        default: []
-       
-    }
-
-   
-},{
+    ratings: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'user',
+          required: true,
+        },
+        rating: {
+          type: Number,
+          min: 1,
+          max: 5,
+          required: true,
+        },
+      },
+    ],
+  },
+  {
     timestamps: true,
-    versionKey: false
-});
+    versionKey: false,
+  },
+);
 
-
-const productModel = mongoose.model('product', productSchema)
+const productModel = mongoose.model('product', productSchema);
 export default productModel;

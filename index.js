@@ -11,7 +11,7 @@ const initApp = async () => {
     await router(app);
     app.use(errorHandler);
 
-    app.listen(PORT, "0.0.0.0",() => {
+    app.listen(PORT, () => {
       console.log(`server is listening on port ${PORT}`);
     });
 
@@ -19,6 +19,6 @@ const initApp = async () => {
 
 initApp().catch((err) => {
 
-    console.error(err);
-    process.exit(0);
-});
+    console.error("Failed to start server:", err);
+    process.exit(1);
+});   

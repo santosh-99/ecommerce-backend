@@ -1,26 +1,31 @@
 import jwt from "jsonwebtoken";
 
 const jwtMiddleware = (req, res, next) => {
-
   const token = req.cookies.token;
 
   if (!token) {
-      res.locals.user = null;
-     return res.status(400).send("Unauthorized")
-    }
+    req.user = null;
+    return res
+      .status(401)
+      .json({ success: false, message: "Unauthorized: No token provided" });
+  }
 
   try {
-    
     const decode = jwt.verify(token, process.env.JWT_SECRET);
-
     req.user = decode;
-    res.locals.user = decode;
-
     next();
   } catch (err) {
-    res.clearCookie("token");
-    req.user = null;
-    next();
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+    });
+    res
+      .status(401)
+      .json({
+        success: false,
+        message: "Unauthorized: Invalid or expired token.",
+      });
   }
 };
 

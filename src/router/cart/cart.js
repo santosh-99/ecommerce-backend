@@ -1,10 +1,12 @@
 import express from "express";
 import controller from "../../controller/index.js";
+import jwtMiddleware from "../../middleware/jwtAuthMiddleware.js";
 
 const router = express.Router();
-router.post('/:userId', controller.cart.addToCart);
-router.get('/:userId', controller.cart.cartItems)
-router.put('/:userId', controller.cart.updateCartItems)
-router.delete('/:userId', controller.cart.removeFromCart)
+router.use(jwtMiddleware);
+router.post('/', controller.cart.addToCart);
+router.get('/', controller.cart.cartItems);
+router.patch('/:productId', controller.cart.updateCartItems);
+router.delete('/:productId', controller.cart.removeFromCart);
 
 export default router;

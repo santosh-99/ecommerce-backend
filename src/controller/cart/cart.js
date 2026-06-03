@@ -1,7 +1,7 @@
 import service from "../../service/index.js";
 
 export const addToCart = async(req, res, next) => {
-    const  userId = req.params.userId;
+    const  userId = req.user.userId;
     const {productId, quantity} = req.body;
     try {
         const cartItem = await service.cart.addcartItem(userId, productId, quantity);
@@ -19,7 +19,7 @@ export const addToCart = async(req, res, next) => {
 export const cartItems = async(req, res, next) => {
     
     try {
-        const userId = req.params.userId;
+        const userId = req.user.userId;
         const cartItems = await service.cart.allCartProducts(userId);
         res.status(200).json({
             success: true,
@@ -34,7 +34,7 @@ export const cartItems = async(req, res, next) => {
 }
 export const updateCartItems = async(req, res, next) => {
     try {
-        const userId = req.params.userId;
+        const userId = req.user.userId;
         const {productId, quantity} = req.body;
 
         const updatedCart = await service.cart.updateCart(userId, productId, quantity);
@@ -49,11 +49,11 @@ export const updateCartItems = async(req, res, next) => {
 }
 export const removeFromCart = async(req, res, next) => {
     try {
-        const userId = req.params.userId;
+        const userId = req.user.userId;
         const {productId} = req.body;
         const deletedItem = await service.cart.removeCartItem(userId, productId);
         res.status(200).json({
-            sussess: true,
+            success: true,
             message: "Cart item deleted succssfully!"
         })
         

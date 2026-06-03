@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 
 export const addcartItem = async (userId, productId, quantity) => {
   const existingItem = await model.cart.findOne({ userId, productId });
-  if (existingItem) {
+    if (existingItem) {
     existingItem.quantity += quantity;
     await existingItem.save();
     return existingItem;
@@ -16,7 +16,7 @@ export const allCartProducts = async (userId) => {
   if (!mongoose.Types.ObjectId.isValid(userId)) {
     throw new ApplicationError("Invalid UserId", 400);
   }
-  const cartItems = await model.cart.find({ userId });
+  const cartItems = await model.cart.find({ userId }).populate("productId");
   return cartItems;
 };
 export const updateCart = async (userId, productId, quantity) => {

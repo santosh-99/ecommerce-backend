@@ -2,3 +2,5 @@ node_modules/
 logs/
 .env
 documentation/
+swagger.json
+.prettierrc

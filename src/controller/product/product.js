@@ -1,4 +1,5 @@
 import service from "../../service/index.js";
+
 export const newProduct = async (req, res, next) => {
   const body = req.body;
   if (!body || Object.keys(body).length === 0) {
@@ -8,20 +9,20 @@ export const newProduct = async (req, res, next) => {
     });
   }
   if (!req.file) {
-    return res.status(400).send("Please upload an image");
+    return res.status(400).json({ success: false, message: "Please upload an image"});
   }
   try {
+    const host = `${ req.protocol}://${req.get('host')}`;
     const productData = {
       ...body,
-      image: `/uploads/${req.file.filename}`,
+      image: `${host}/uploads/${req.file.filename}`,
     };
-    const newProduct = await service.product.addProduct(productData);
+    const product = await service.product.addProduct(productData);
     res.status(201).json({
       success: true,
-      data: newProduct,
+      data: product,
     });
   } catch (err) {
-    console.log("err:", err);
     next(err);
   }
 };
@@ -49,36 +50,37 @@ export const fetchOne = async (req, res, next) => {
   }
 };
 export const productUpdate = async (req, res, next) => {
-  const productId = req.params.productId;
-  const { price } = req.body;
+
   try {
-    const product = await service.product.updateProduct(productId, price);
-    res.status(201).json({
+    const { id }  = req.params;
+    const updateData = req.body;
+
+    const product = await service.product.updateProduct(id, updateData);
+
+    res.status(200).json({
       success: true,
-      message: "Product Updated!",
+      message: "Product Updated successfully",
       data: product,
     });
   } catch (err) {
     next(err);
   }
 };
-export const productDelete = async(req, res, next) => {
+export const productDelete = async (req, res, next) => {
   try {
     const productId = req.params.productId;
-    const product = await service.product.deleteProduct(productId);
+     await service.product.deleteProduct(productId);
     res.status(200).json({
       success: true,
       message: "product deleted successfully",
-      data: product,
     });
   } catch (err) {
     next(err);
   }
 };
 export const productFilter = async (req, res, next) => {
-  const filters = req.query;
   try {
-    const products = await service.product.filterProduct(filters);
+    const products = await service.product.filterProduct(req.query);
     res.status(200).json({
       success: true,
       data: products,
@@ -88,13 +90,14 @@ export const productFilter = async (req, res, next) => {
   }
 };
 export const productRating = async (req, res, next) => {
-
   try {
     const productId = req.params.productId;
-    const { userId, rating } = req.body;
+    const { rating } = req.body;
+    const userId = req.user.userId;
 
     if (!userId || !rating) {
       return res.status(400).json({
+        success:false,
         message: "UserID and rating required",
       });
     }
@@ -113,34 +116,29 @@ export const productRating = async (req, res, next) => {
   }
 };
 
-//Add bulk products
-export const bulkCreate = async(req, res, next) => {
-    try {
-        console.log("product controller")
-        const products = JSON.parse(req.body.products);
-        console.log("products:", products)
-        
-        const files = req.files;
-        
-        //map images to products;
-        const finalProducts = products.map((product, index) => {
-            return {
-                ...product,
-                image:files[index]
-                    ? `/uploads/${files[index].filename}`: null 
-            };
-        });
-        const bulkProduct = await service.product.bulkCreateService(finalProducts);
-        console.log("bulK:", bulkProduct);
-        res.status(201).json({
-            success: true,
-            data: bulkProduct,
-        });
+export const bulkCreate = async (req, res, next) => {
+  try {
+    console.log("product controller");
+    const products = JSON.parse(req.body.products);
+    console.log("products:", products);
 
-    } catch (err) {
-        console.log("err:", err)
-        next(err);
-    
-    }
+    const files = req.files;
 
-}
+    //map images to products;
+    const finalProducts = products.map((product, index) => {
+      return {
+        ...product,
+        image: files[index] ? `/uploads/${files[index].filename}` : null,
+      };
+    });
+    const bulkProduct = await service.product.bulkCreateService(finalProducts);
+    console.log("bulK:", bulkProduct);
+    res.status(201).json({
+      success: true,
+      data: bulkProduct,
+    });
+  } catch (err) {
+    console.log("err:", err);
+    next(err);
+  }
+};
