@@ -1,5 +1,12 @@
 node_modules/
 logs/
+*.log
 .env
 documentation/
-.prettierrc
+others/
+.vscode/
+
+public/uploads/products/
+
+.DS_Store
+Thumbs.db
