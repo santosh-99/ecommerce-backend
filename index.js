@@ -1,5 +1,4 @@
 import "./env.js";
-
 import connectDatabase from "./src/config/initDB.js";
 import createApp from "./app.js";
 import router from "./src/routes/index.js";

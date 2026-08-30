@@ -7,7 +7,6 @@ import appConfig from "./app.config.js";
 // ============================================================
 // SESSION MIDDLEWARE
 // ============================================================
-
 const sessionMiddleware = session({
 
     secret: appConfig.session.secret,
