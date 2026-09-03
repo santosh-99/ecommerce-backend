@@ -1,110 +1,326 @@
+import crypto from "crypto";
+
 import paymentRepository from "../repository/payment.repository.js";
-import orderRepository from  "../repository/payment.repository.js";
+import orderRepository from "../repository/order.repository.js";
+import razorpay from "../config/razorpay.config.js";
+import appConfig from "../config/app.config.js";
+
 import { ApplicationError } from "../errors/index.js";
 
+
 class PaymentService {
+
     constructor() {
+
         this.paymentRepository = paymentRepository;
         this.orderRepository = orderRepository;
+
     }
 
 
-    //create payment for an order
-    async cratePayment(userId, orderId, paymentMethod) {
-        //1. check wether order belongs to user
-        const order =
-        await this.orderRepository.findByUserAndOrder(userId, orderId);
+    //========================================================
+    // CREATE PAYMENT
+    //========================================================
 
-        if(!order) {
+    async createPayment(userId, orderId, paymentMethod) {
+
+        // 1. Verify order
+
+        const order =
+            await this.orderRepository.findByUserAndOrder(
+                userId,
+                orderId
+            );
+
+        if (!order) {
+
             throw new ApplicationError(
                 "Order not found"
             );
+
         }
 
-        //2.check wether payment alreday exists
-        const existingPayment = await this.paymentRepository.findByOrderId(orderId);
 
-        if(existingPayment) {
-            throw new ApplicationError(
-                "Payment alreday exists for this order"
+        // 2. Check whether payment already exists
+
+        const existingPayment =
+            await this.paymentRepository.findByOrderId(
+                orderId
             );
+
+        if (existingPayment) {
+
+            throw new ApplicationError(
+                "Payment already exists for this order"
+            );
+
         }
-        //3.create Payment
+
+
+        // 3. Convert total amount into paise
+
+        const amountInPaise =
+            Math.round(order.totalAmount * 100);
+
+
+        // 4. Create Razorpay order
+
+        const razorpayOrder =
+            await razorpay.orders.create({
+
+                amount: amountInPaise,
+
+                currency: "INR",
+
+                receipt: orderId.toString()
+
+            });
+
+
+        // 5. Create payment in MongoDB
+
         const payment =
-        await this.paymentReposistory.create({
-            userId,
-            orderId,
-            amount:order.totalAmount,
-            paymentStatus:"pending"
-        });
+            await this.paymentRepository.create({
+
+                userId,
+
+                orderId,
+
+                amount: order.totalAmount,
+
+                currency: "INR",
+
+                paymentMethod,
+
+                status: "PENDING",
+
+                gateway: "RAZORPAY",
+
+                gatewayOrderId: razorpayOrder.id
+
+            });
+
+
+        // 6. Return payment details
+
+        return {
+
+            payment,
+
+            razorpayOrder: {
+
+                id: razorpayOrder.id,
+
+                amount: razorpayOrder.amount,
+
+                currency: razorpayOrder.currency
+
+            }
+
+        };
+
+    }
+
+
+    //========================================================
+    // VERIFY PAYMENT
+    //========================================================
+
+    async verifyPayment(
+        userId,
+        razorpayOrderId,
+        razorpayPaymentId,
+        razorpaySignature
+    ) {
+
+        // 1. Find payment using Razorpay Order ID
+
+        const payment =
+            await this.paymentRepository.findByGatewayOrderId(
+                razorpayOrderId
+            );
+
+        if (!payment) {
+
+            throw new ApplicationError(
+                "Payment not found"
+            );
+
+        }
+
+
+        // 2. Verify payment belongs to logged-in user
+
+        if (
+            payment.userId.toString() !==
+            userId.toString()
+        ) {
+
+            throw new ApplicationError(
+                "Unauthorized payment"
+            );
+
+        }
+
+
+        // 3. Generate signature on server
+
+        const generatedSignature =
+            crypto
+                .createHmac(
+                    "sha256",
+                    appConfig.razorpay.key_secret
+                )
+                .update(
+                    `${razorpayOrderId}|${razorpayPaymentId}`
+                )
+                .digest("hex");
+
+
+        // 4. Compare signatures
+
+        if (
+            generatedSignature !==
+            razorpaySignature
+        ) {
+
+            await this.paymentRepository.updatePaymentStatus(
+                payment._id,
+                "FAILED"
+            );
+
+            throw new ApplicationError(
+                "Payment verification failed"
+            );
+
+        }
+
+
+        // 5. Save Razorpay payment ID
+
+        const updatedPayment =
+            await this.paymentRepository.updateGatewayDetails(
+                payment._id,
+                razorpayOrderId,
+                razorpayPaymentId
+            );
+
+
+        // 6. Update payment status
+
+        const successPayment =
+            await this.paymentRepository.updatePaymentStatus(
+                updatedPayment._id,
+                "SUCCESS"
+            );
+
+         await this.orderRepository.updatePaymentStatus(
+            payment.orderId,
+            "PAID"
+         );
+
+
+        return successPayment;
+
+    }
+
+
+    //========================================================
+    // GET PAYMENT BY ORDER
+    //========================================================
+
+    async getPaymentByOrder(userId, orderId) {
+
+        // 1. Verify order belongs to user
+
+        const order =
+            await this.orderRepository.findByUserAndOrder(
+                userId,
+                orderId
+            );
+
+        if (!order) {
+
+            throw new ApplicationError(
+                "Order not found"
+            );
+
+        }
+
+
+        // 2. Find payment
+
+        const payment =
+            await this.paymentRepository.findByOrderId(
+                orderId
+            );
+
+        if (!payment) {
+
+            throw new ApplicationError(
+                "Payment not found"
+            );
+
+        }
+
+
         return payment;
 
     }
 
 
-    //get payment by order
+    //========================================================
+    // GET USER PAYMENTS
+    //========================================================
 
-    async getPayementByOrder(userId, orderId) {
-        //verify order belong to user
-        const order =
-        await this.orderRepository.findByUserAndOrder(
-            userId,
-            orderId
+    async getUserPayments(userId) {
+
+        return await this.paymentRepository.findByUserId(
+            userId
         );
 
-        if(!order) {
-            throw new ApplicationError(
-                "order not found"
-            );
-        }
+    }
+
+
+    //========================================================
+    // GET PAYMENT BY ID
+    //========================================================
+
+    async getPaymentById(userId, paymentId) {
+
         const payment =
-        await this.paymentRepository.findByOrderId(
-            orderId
-        );
-        if(!payment) {
+            await this.paymentRepository.findById(
+                paymentId
+            );
+
+        if (!payment) {
+
             throw new ApplicationError(
                 "Payment not found"
             );
 
-            return payment;
         }
 
 
-    }
+        // Verify payment belongs to user
 
-    //get user's payments
-    async getUserPayments(userId) {
-        return await this.paymentRepository.findByUserId(
-            userId
-        );
-    }
+        if (
+            payment.userId.toString() !==
+            userId.toString()
+        ) {
 
-    //update payment status
-    async updatePaymentStatus(userId, paymentId, paymentStatus) {
-        const payment = await this.paymentRepository.findById(paymentId);
-
-        if(!payment) {
-            throw new ApplicationError("Payment not found");
-
-        }
-
-        //make sure payemnt belongs to logged in user
-
-        if(
-            payment.userId.toString() !== userId.toString()
-        ){
             throw new ApplicationError(
-                "Unauthorized Payment access"
+                "Unauthorized payment access"
             );
+
         }
 
-        return await this.paymentRepository.updatePaymentStatus(
-        paymentId,
-        paymentStatus
-        );
+
+        return payment;
 
     }
 
 }
+
 
 export default new PaymentService();

@@ -12,7 +12,7 @@ class OrderService {
     }
 
     //---------------------------------------------------------------
-    // Create order from cart
+    // CREATE ORDER
     //---------------------------------------------------------------
     async createOrder(userId, address) {
 
@@ -65,8 +65,8 @@ class OrderService {
                 items: orderItems,
                 totalAmount,
                 address,
-                status: "pending",
-                paymentStatus: "pending"
+                status: "PENDING",
+                paymentStatus: "PENDING"
             });
 
 
@@ -83,7 +83,7 @@ class OrderService {
     }
 
     //---------------------------------------------------------------
-    // Get user's orders
+    // GET ORDERS
     //---------------------------------------------------------------
     async getUserOrders(userId) {
 
@@ -93,7 +93,7 @@ class OrderService {
     }
 
     //---------------------------------------------------------------
-    // Get one order
+    // GET ORDER BY USER
     //---------------------------------------------------------------
     async getOrderById(userId, orderId) {
 
@@ -115,7 +115,7 @@ class OrderService {
     }
 
     //---------------------------------------------------------------
-    // Cancel order
+    // CANCEL ORDER
     //---------------------------------------------------------------
     async cancelOrder(userId, orderId) {
 
@@ -133,7 +133,7 @@ class OrderService {
         }
 
 
-        if (order.status !== "pending") {
+        if (order.status !== "PENDING") {
             throw new ApplicationError(
                 "Order cannot be cancelled"
             );
@@ -142,7 +142,7 @@ class OrderService {
 
         return await this.orderRepository.updateStatus(
             orderId,
-            "cancelled"
+            "CANCELLED"
         );
     }
 }

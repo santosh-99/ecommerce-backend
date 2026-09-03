@@ -1,14 +1,21 @@
 import paymentService from "../services/payment.service.js";
 
 class PaymentController {
+
     constructor() {
+
         this.paymentService = paymentService;
+
     }
 
-    //create payment
+    //===================================================
+    // CREATE PAYMENT
+    //===================================================
 
-    async createPayment(req, res, next){
-        try{
+    createPayment = async(req, res, next)  => {
+
+        try {
+
             const userId = req.user.userId;
 
             const {
@@ -16,27 +23,72 @@ class PaymentController {
                 paymentMethod
             } = req.body;
 
-            const payment =
-            await this.paymentService.createPayment(
-                userId,
-                orderId,
-                paymentMethod
-            );
-            res.status(201).json({
-                success:true,
-                message:"Payment created successfully",
-                data:payment
+            const payment = await this.paymentService.createPayment(userId, orderId, paymentMethod);
+
+            return res.status(201).json({
+                success: true,
+
+                message: "payment created successfully",
+
+                data: payment
             });
 
-        }catch(error) {
-            next(error)
+
+        } catch (error) {
+
+            next(error);
         }
+
     }
 
-    // Get payment by order
-    async getPaymentByOrder(req, res, next) {
+    //===================================================
+    // VERIFY PAYMENT
+    //===================================================
+     verifyPayment = async (req, res, next) => {
+
         try {
             const userId = req.user.userId;
+
+            const {
+                razorpayOrderId,
+                razorpayPaymentId,
+                razorpaySignature
+            } = req.body;
+
+
+            const payment  =
+            await this.paymentService.verifyPayment(
+
+                userId,
+                razorpayOrderId,
+                razorpayPaymentId,
+                razorpaySignature
+            );
+
+            return res.status(200).json({
+
+                success: true,
+
+                message: "Payment verified successfully",
+
+                data: payment
+            });
+
+        } catch(error) {
+
+            next(error);
+        }
+     };
+
+    //===================================================
+    // GET PAYMENT BY ORDER
+    //===================================================
+
+        getPaymentByOrder = async(req, res, next)  => {
+
+        try {
+            const  userId = req.user.userId;
+
             const { orderId } = req.params;
 
             const payment =
@@ -44,58 +96,69 @@ class PaymentController {
                 userId,
                 orderId
             );
-            res.status(200).json({
-                success:true,
-                data:payment
+
+            return res.status(200).json({
+                success: true,
+                data: payment
             });
 
-        }catch(error) {
+        } catch (error) {
+
             next(error);
         }
     }
 
-    //get Logged-in user's payments
-    async getUserPayments(req, res, next) {
+    //===================================================
+    // GET LOGGED-IN USER PAYMENTS
+    //===================================================
+
+     getUserPayments = async (req, res, next) => {
+
         try {
             const userId = req.user.userId;
+
             const payments =
             await this.paymentService.getUserPayments(
                 userId
             );
-            res.status(200).json({
-                success: true,
-                data:payments
-            });
 
-        }catch(err) {
-            next(err);
+            return res.status(200).json({
+                success: true,
+                data: payments
+            });
+        } catch (error) {
+            next(error);
         }
     }
 
-    //update payment status
-    async updatePaymentStatus(req, res, next) {
+    //===================================================
+    // CREATE PAYMENT BY ID
+    //===================================================
+
+     getPaymentById = async (req, res, next)  => {
+
         try {
             const userId = req.user.userId;
+
             const { paymentId } = req.params;
-            const { paymentStatus } = req.body;
 
             const payment =
-            await this.paymentService.updatePaymentStatus(
+            await this.paymentService.getPaymentById(
                 userId,
-                paymentId,
-                paymentStatus
+                paymentId
             );
-            res.status(200).json({
+
+            return res.status(200).json({
                 success: true,
-                message: "Payment status updated successfully",
                 data: payment
             });
 
-        } catch(err) {
-            next(err)
+        } catch (error) {
+            
+            next(error);
         }
     }
-}
 
+}
 
 export default new PaymentController();

@@ -16,19 +16,26 @@ class AuthController {
 
     register = async (req, res) => {
 
-        const result =
-            await this.authService.register(req.body);
+        try {
 
+            const result =
+                await this.authService.register(req.body);
 
-        return res.status(201).json({
+             return res.status(201).json({
 
-            success: true,
+                success: true,
 
-            message: "User registered successfully.",
+                message: "User registered successfully.",
 
-            data: result
+                data: result
 
-        });
+            });
+
+        } catch (error) {
+
+            next(error)
+
+        }
 
     };
 
@@ -39,29 +46,35 @@ class AuthController {
 
     login = async (req, res) => {
 
-        const authResult =
-            await this.authService.login(req.body);
+        try {
+
+            const authResult = await this.authService.login(req.body);
+
+            //create sesssion
+
+            req.session.userId = authResult.user.id.toString()
+
+            //explicitly save session
+            req.session.save((error) => {
+
+                if (error) {
+                    return next(error);
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    message: "Login successful.",
+                    data: {
+                        user: authResult.user
+                    }
+                });
+            });
 
 
-        // Create session after successful authentication
 
-        req.session.userId =
-            authResult.user.id;
-
-
-        return res.status(200).json({
-
-            success: true,
-
-            message: "Login successful.",
-
-            data: {
-
-                user: authResult.user
-
-            }
-
-        });
+        } catch (error) {
+            next(error);
+        }
 
     };
 

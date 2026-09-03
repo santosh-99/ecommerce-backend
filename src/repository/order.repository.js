@@ -11,7 +11,7 @@ class OrderRepository extends BaseRepository {
 
 
     //------------------------------------------------------------------
-    // Find all orders of a user
+    // GET  ORDERS
     //------------------------------------------------------------------
 
     async findByUser(userId) {
@@ -22,7 +22,7 @@ class OrderRepository extends BaseRepository {
     }
 
     //------------------------------------------------------------------
-    // Find a specific order of a user
+    //  FIND ORDER OF A USER
     //------------------------------------------------------------------
 
     async findByUserAndOrder(userId, orderId) {
@@ -36,7 +36,7 @@ class OrderRepository extends BaseRepository {
     }
 
     //------------------------------------------------------------------
-    // Update order status
+    // UPDATE ORDER STATUS
     //------------------------------------------------------------------
 
     async updateStatus(orderId, status) {
@@ -50,6 +50,24 @@ class OrderRepository extends BaseRepository {
             }
         );
     }
+
+    //========================================================
+    // UPDATE PAYMENT STATUS
+    //========================================================
+
+     async updatePaymentStatus(orderId, paymentStatus) {
+
+        return this.model.findByIdAndUpdate(
+            orderId,
+            { paymentStatus },
+            {
+                new : true,
+                runValidators: true,
+
+            }
+        );
+     }
+
 }
 
 

@@ -9,11 +9,15 @@ const authMiddleware = async (req, res, next) => {
         // CHECK SESSION
         // ==========================================================
 
-        if (!req.session || !req.session.userId) {
+        if (!req.session?.userId) {
 
-            throw new UnauthorizedError(
+
+            return next(
+                 new UnauthorizedError(
                 "Authentication required."
-            );
+            )
+        );
+
         }
 
 
@@ -27,18 +31,22 @@ const authMiddleware = async (req, res, next) => {
 
 
         // ==========================================================
-        // USER NOT FOUND
+        // USER NOT FOUND / INVALID SESSION
         // ==========================================================
 
         if (!user) {
 
-            req.session.destroy(() => {});
+            return req.session.destroy(() => {
 
-            throw new UnauthorizedError(
-                "Authentication required."
-            );
+                next(
+                    new UnauthorizedError(
+                        "Authentication required."
+                    )
+                );
+            });
+
+
         }
-
 
         // ==========================================================
         // ATTACH USER TO REQUEST
@@ -54,21 +62,16 @@ const authMiddleware = async (req, res, next) => {
 
         };
 
+        // ==========================================================
+        // SUCCESSFUL AUTHENTICATION
+        // ==========================================================
 
         next();
 
     } catch (error) {
+        
+        next(error);
 
-        if (error instanceof UnauthorizedError) {
-
-            return next(error);
-        }
-
-        return next(
-            new UnauthorizedError(
-                "Authentication required."
-            )
-        );
     }
 };
 
