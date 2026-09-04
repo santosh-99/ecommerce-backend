@@ -23,6 +23,7 @@ const createApp = () => {
     );
 
     app.use(cookieParser());
+    app.set("trust proxy", 1);
     app.use(sessionMiddleware);
 
     app.use(requestLogger);
